@@ -655,27 +655,27 @@ public class ManageOrder extends javax.swing.JFrame {
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
         if (finalTotalPrice != 0 && !name.getText().equals("")) {
-        orderId = getUniqueId("Bill-");
+            orderId = getUniqueId("Bill-");
 
-        DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
-        if (tableCart.getRowCount() != 0) {
-            List<String[]> items = new ArrayList<>();
-            for (int i = 0; i < tableCart.getRowCount(); i++) {
-                String[] item = {
-                    tableCart.getValueAt(i, 1).toString(), // Product name
-                    tableCart.getValueAt(i, 3).toString(), // Price
-                    tableCart.getValueAt(i, 2).toString(), // Quantity
-                    tableCart.getValueAt(i, 5).toString()  // Subtotal
-                };
-                items.add(item);
+            DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
+            if (tableCart.getRowCount() != 0) {
+                List<String[]> items = new ArrayList<>();
+                for (int i = 0; i < tableCart.getRowCount(); i++) {
+                    String[] item = {
+                        tableCart.getValueAt(i, 1).toString(), // Product name
+                        tableCart.getValueAt(i, 3).toString(), // Price
+                        tableCart.getValueAt(i, 2).toString(), // Quantity
+                        tableCart.getValueAt(i, 5).toString() // Subtotal
+                    };
+                    items.add(item);
+                }
+
+                PrintReceipt receipt = new PrintReceipt(orderId, name.getText(), currentUserName, items, finalTotalPrice);
+                receipt.showPreview();
             }
-
-            PrintReceipt receipt = new PrintReceipt(orderId, name.getText(), currentUserName, items, finalTotalPrice);
-            receipt.showPreview();
+        } else {
+            JOptionPane.showMessageDialog(null, "Please select a customer and add items to cart.");
         }
-    } else {
-        JOptionPane.showMessageDialog(null, "Please select a customer and add items to cart.");
-    }
 
     }//GEN-LAST:event_saveActionPerformed
 
@@ -732,69 +732,70 @@ public class ManageOrder extends javax.swing.JFrame {
     }//GEN-LAST:event_tableProductMouseClicked
 
     private void cartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cartActionPerformed
-        // TODO add your handling code here:
-        // Check if a customer is selected
         if (customerPk == 0) {
-            JOptionPane.showMessageDialog(null, "Please pick a customer before adding items to the cart.", "Warning", JOptionPane.WARNING_MESSAGE);
-            return; // Exit the method if no customer is selected
-        }
+        JOptionPane.showMessageDialog(null, "Please pick a customer before adding items to the cart.", "Warning", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
 
-        String noOfUnits = oquan.getText();
+    String noOfUnits = oquan.getText();
 
-        // Check if the quantity is valid
-        if (noOfUnits.equals("") || Integer.parseInt(noOfUnits) <= 0) {
-            JOptionPane.showMessageDialog(null, "Please enter a quantity greater than 0.");
-            return; // Exit the method
-        }
+    if (noOfUnits.equals("") || Integer.parseInt(noOfUnits) <= 0) {
+        JOptionPane.showMessageDialog(null, "Please enter a quantity greater than 0.");
+        return;
+    }
 
-        String ProductName = pname.getText();
-        String ProductPrice = pprice.getText();
-        String ProductDescription = pdesc.getText();
+    String ProductName = pname.getText();
+    String ProductPrice = pprice.getText();
+    String ProductDescription = pdesc.getText();
 
-        int totalPrice = Integer.parseInt(noOfUnits) * Integer.parseInt(ProductPrice);
+    int totalPrice = Integer.parseInt(noOfUnits) * Integer.parseInt(ProductPrice);
+    int checkStock = 0;
+    int checkProductAlreadyExistInCart = 0;
 
-        int checkStock = 0;
-        int checkProductAlreadyExistInCart = 0;
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
-            ps = con.prepareStatement("Select * from product where id = " + productPk + "");
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                if (rs.getInt("quantity") >= Integer.parseInt(noOfUnits)) {
-                    checkStock = 1;
-                } else {
-                    JOptionPane.showMessageDialog(null, "Product is out of stock, Only " + rs.getInt("quantity") + " left.");
-                }
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
+        ps = con.prepareStatement("SELECT * FROM product WHERE id = ?");
+        ps.setInt(1, productPk);
+        rs = ps.executeQuery();
+
+        while (rs.next()) {
+            int availableQuantity = Integer.parseInt(rs.getString("quantity"));
+            if (availableQuantity >= Integer.parseInt(noOfUnits)) {
+                checkStock = 1;
+            } else {
+                JOptionPane.showMessageDialog(null, "Product is out of stock, Only " + rs.getInt("quantity") + " left.");
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Please enter a valid number");
-        } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(ManageOrder.class.getName()).log(Level.SEVERE, null, ex);
         }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(null, "Please enter a valid number");
+    } catch (ClassNotFoundException | SQLException ex) {
+        Logger.getLogger(ManageOrder.class.getName()).log(Level.SEVERE, null, ex);
+    }
 
-        try {
-            if (checkStock == 1) {
-                DefaultTableModel model = (DefaultTableModel) tableCart.getModel();
-                if (tableCart.getRowCount() != 0) {
-                    for (int i = 0; i < tableCart.getRowCount(); i++) {
-                        if (Integer.parseInt(model.getValueAt(i, 0).toString()) == productPk) {
-                            checkProductAlreadyExistInCart = 1;
-                            JOptionPane.showMessageDialog(null, "Product already exists in the cart.");
-                        }
+    try {
+        if (checkStock == 1) {
+            DefaultTableModel model = (DefaultTableModel) tableCart.getModel();
+            if (tableCart.getRowCount() != 0) {
+                for (int i = 0; i < tableCart.getRowCount(); i++) {
+                    if (Integer.parseInt(model.getValueAt(i, 0).toString()) == productPk) {
+                        checkProductAlreadyExistInCart = 1;
+                        JOptionPane.showMessageDialog(null, "Product already exists in the cart.");
                     }
                 }
-                if (checkProductAlreadyExistInCart == 0) {
-                    model.addRow(new Object[]{productPk, ProductName, noOfUnits, ProductPrice, ProductDescription, totalPrice});
-                    finalTotalPrice += totalPrice;
-                    finalprice.setText(String.valueOf(finalTotalPrice));
-                    JOptionPane.showMessageDialog(null, "Added Successfully.");
-                }
-                clearProductFields();
             }
-        } catch (NumberFormatException numberFormatException) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid number");
+            if (checkProductAlreadyExistInCart == 0) {
+                model.addRow(new Object[]{productPk, ProductName, noOfUnits, ProductPrice, ProductDescription, totalPrice});
+                finalTotalPrice += totalPrice;
+                finalprice.setText(String.valueOf(finalTotalPrice));
+                JOptionPane.showMessageDialog(null, "Added Successfully.");
+            }
+            clearProductFields();
         }
+    } catch (NumberFormatException numberFormatException) {
+        JOptionPane.showMessageDialog(this, "Please enter a valid number");
+    }
+
     }//GEN-LAST:event_cartActionPerformed
 
     private void tableCartMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableCartMouseClicked

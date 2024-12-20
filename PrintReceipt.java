@@ -156,77 +156,64 @@ public class PrintReceipt {
     private void updateDatabase() throws SQLException, ClassNotFoundException {
     Connection con = null;
     PreparedStatement ps = null;
-    
+
     try {
-        // Database Connection
         Class.forName("com.mysql.cj.jdbc.Driver");
         con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
-        
-        // Start transaction
         con.setAutoCommit(false);
-        
-        // Update product quantities
+
         for (String[] item : items) {
-            // First check if there's enough quantity
             String checkQuery = "SELECT quantity FROM product WHERE name = ?";
             ps = con.prepareStatement(checkQuery);
-            ps.setString(1, item[0]); // Product name
+            ps.setString(1, item[0]);
             ResultSet rs = ps.executeQuery();
-            
+
             if (rs.next()) {
-                int currentQuantity = rs.getInt("quantity");
+                int currentQuantity = Integer.parseInt(rs.getString("quantity"));
                 int requestedQuantity = Integer.parseInt(item[2]);
-                
+
                 if (currentQuantity >= requestedQuantity) {
-                    // Update quantity
-                    String updateQuery = "UPDATE product SET quantity = quantity - ? WHERE name = ? AND quantity >= ?";
+                    String updateQuery = "UPDATE product SET quantity = quantity - ? WHERE name = ?";
                     ps = con.prepareStatement(updateQuery);
                     ps.setInt(1, requestedQuantity);
                     ps.setString(2, item[0]);
-                    ps.setInt(3, requestedQuantity);
-                    
+
                     int updated = ps.executeUpdate();
                     if (updated != 1) {
                         con.rollback();
-                        throw new SQLException("Failed to update quantity for product: " + item[0] + 
-                                            ". Please check if the product exists and has sufficient stock.");
+                        throw new SQLException("Failed to update quantity for product: " + item[0]);
                     }
                 } else {
                     con.rollback();
-                    throw new SQLException("Insufficient quantity for product: " + item[0] + 
-                                        ". Available: " + currentQuantity + ", Requested: " + requestedQuantity);
+                    throw new SQLException("Insufficient quantity for product: " + item[0] + ". Available: " + currentQuantity + ", Requested: " + requestedQuantity);
                 }
             } else {
                 con.rollback();
                 throw new SQLException("Product not found: " + item[0]);
             }
         }
-        
-        // Insert into orderdetail table
+
         String insertQuery = "INSERT INTO orderdetail (orderid, customerName, totalpaid, orderdate) VALUES (?, ?, ?, ?)";
         ps = con.prepareStatement(insertQuery);
         ps.setString(1, orderId);
         ps.setString(2, customerName);
         ps.setInt(3, totalPaid);
         ps.setString(4, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        
+
         int inserted = ps.executeUpdate();
         if (inserted != 1) {
             con.rollback();
             throw new SQLException("Failed to create order record");
         }
-        
-        // If everything is successful, commit the transaction
+
         con.commit();
-        
+
     } catch (SQLException e) {
-        // Rollback on error
         if (con != null) {
             try {
                 con.rollback();
             } catch (SQLException rollbackEx) {
-                throw new SQLException("Error during rollback: " + rollbackEx.getMessage() + 
-                                    "\nOriginal error: " + e.getMessage());
+                throw new SQLException("Error during rollback: " + rollbackEx.getMessage() + "\nOriginal error: " + e.getMessage());
             }
         }
         throw e;
