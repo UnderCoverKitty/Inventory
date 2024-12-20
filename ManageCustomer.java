@@ -76,7 +76,9 @@ public class ManageCustomer extends javax.swing.JFrame {
         }
     }
 
-    public ManageCustomer(String role) {
+    public ManageCustomer(String role, String names) {
+        this.currentUserRole = role;
+        this.currentUserName = names;
         initComponents();
         setLocationRelativeTo(null);
         currentUserRole = role;

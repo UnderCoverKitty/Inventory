@@ -36,6 +36,7 @@ public class ManageUser extends javax.swing.JFrame {
             }
         });
     }
+    
 
     private Vector<String> getColumnNames(DefaultTableModel model) {
         Vector<String> columnNames = new Vector<>();
@@ -71,7 +72,9 @@ public class ManageUser extends javax.swing.JFrame {
         }
     }
 
-    public ManageUser(String role) {
+    public ManageUser(String role, String names) {
+        this.currentUserRole = role;
+        this.currentUserName = names;
         initComponents();
         setLocationRelativeTo(null);
         currentUserRole = role;  // You can use this role to manage access, if needed

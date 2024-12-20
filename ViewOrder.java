@@ -33,7 +33,9 @@ public class ViewOrder extends javax.swing.JFrame {
         refreshTables();
     }
 
-    public ViewOrder(String role) {
+    public ViewOrder(String role,String names) {
+        this.currentUserRole = role;
+        this.currentUserName = names;
         initComponents();
         setLocationRelativeTo(null);
         currentUserRole = role;

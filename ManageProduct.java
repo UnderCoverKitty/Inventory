@@ -103,9 +103,11 @@ public class ManageProduct extends javax.swing.JFrame {
         }
     }
 
-    public ManageProduct(String role) {
+    public ManageProduct(String role, String names) {
         initComponents();
         setLocationRelativeTo(null);
+        this.currentUserRole = role;
+        this.currentUserName = names;
         currentUserRole = role;  // Set the role
         populateCategoryComboBox();
         refresh();  // Refresh data when the form is initialized
@@ -657,7 +659,6 @@ public class ManageProduct extends javax.swing.JFrame {
             } else {
 // Handle the case where currentUserRole is null (e.g., show an error message)
                 JOptionPane.showMessageDialog(this, "Error: User  role is not defined.");
-                this.dispose();
             }
         }
     }//GEN-LAST:event_closeActionPerformed

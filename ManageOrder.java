@@ -1,4 +1,5 @@
 
+import java.awt.FileDialog;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import static java.awt.print.Printable.NO_SUCH_PAGE;
 import static java.awt.print.Printable.PAGE_EXISTS;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -25,6 +27,12 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.print.DocPrintJob;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.Destination;
 import javax.swing.JTable;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -647,77 +655,27 @@ public class ManageOrder extends javax.swing.JFrame {
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
         if (finalTotalPrice != 0 && !name.getText().equals("")) {
-            orderId = getUniqueId("Bill-");
-        }
+        orderId = getUniqueId("Bill-");
 
         DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
         if (tableCart.getRowCount() != 0) {
-            Connection con = null;
-            PreparedStatement ps = null;
-            try {
-                // Save order details to database
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
-
-                for (int i = 0; i < tableCart.getRowCount(); i++) {
-                    ps = con.prepareStatement("UPDATE product SET quantity = quantity - ? WHERE id = ?");
-                    ps.setInt(1, Integer.parseInt(dtm.getValueAt(i, 2).toString()));
-                    ps.setInt(2, Integer.parseInt(dtm.getValueAt(i, 0).toString()));
-                    ps.executeUpdate();
-                }
-
-                SimpleDateFormat myFormat = new SimpleDateFormat("yyyy-MM-dd");
-                Calendar cal = Calendar.getInstance();
-                ps = con.prepareStatement("INSERT INTO orderdetail (customer_pk, orderdate, totalpaid) VALUES (?, ?, ?)");
-                ps.setInt(1, customerPk);
-                ps.setString(2, myFormat.format(cal.getTime()));
-                ps.setInt(3, finalTotalPrice);
-                ps.executeUpdate();
-
-                // Prepare receipt data
-                List<String[]> items = new ArrayList<>();
-                for (int i = 0; i < tableCart.getRowCount(); i++) {
-                    String[] item = {
-                        tableCart.getValueAt(i, 1).toString(), // Product name
-                        tableCart.getValueAt(i, 3).toString(), // Price
-                        tableCart.getValueAt(i, 2).toString(), // Quantity
-                        tableCart.getValueAt(i, 5).toString() // Subtotal
-                    };
-                    items.add(item);
-                }
-
-                // Print receipPrintRet
-                PrintReceipt receipt = new PrintReceipt(orderId, name.getText(), currentUserName, items, finalTotalPrice);
-                PrinterJob printerJob = PrinterJob.getPrinterJob();
-                printerJob.setPrintable(receipt);
-
-                if (printerJob.printDialog()) {
-                    try {
-                        printerJob.print();
-                    } catch (PrinterException e) {
-                        JOptionPane.showMessageDialog(null, "Error printing receipt: " + e.getMessage());
-                    }
-                }
-
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Unexpected Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (ps != null) {
-                        ps.close();
-                    }
-                    if (con != null) {
-                        con.close();
-                    }
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
+            List<String[]> items = new ArrayList<>();
+            for (int i = 0; i < tableCart.getRowCount(); i++) {
+                String[] item = {
+                    tableCart.getValueAt(i, 1).toString(), // Product name
+                    tableCart.getValueAt(i, 3).toString(), // Price
+                    tableCart.getValueAt(i, 2).toString(), // Quantity
+                    tableCart.getValueAt(i, 5).toString()  // Subtotal
+                };
+                items.add(item);
             }
 
-            setVisible(false);
-            new ManageOrder(currentUserRole, currentUserName).setVisible(true);
+            PrintReceipt receipt = new PrintReceipt(orderId, name.getText(), currentUserName, items, finalTotalPrice);
+            receipt.showPreview();
         }
+    } else {
+        JOptionPane.showMessageDialog(null, "Please select a customer and add items to cart.");
+    }
 
     }//GEN-LAST:event_saveActionPerformed
 
@@ -893,7 +851,7 @@ public class ManageOrder extends javax.swing.JFrame {
     }//GEN-LAST:event_oquanKeyTyped
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-       
+
         if (!isEditMode) {
             // Add mode
             if (!validateFields(false)) {

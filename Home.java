@@ -171,13 +171,13 @@ public class Home extends javax.swing.JFrame {
 
     private void btncustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btncustomerActionPerformed
         // TODO add your handling code here:
-        new ManageCustomer(currentUserRole).setVisible(true); // Pass the role
+        new ManageCustomer(currentUserRole, currentUserName).setVisible(true); // Pass the role
         this.dispose();
     }//GEN-LAST:event_btncustomerActionPerformed
 
     private void btnuserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnuserActionPerformed
         // TODO add your handling code here:
-        new ManageUser(currentUserRole).setVisible(true);
+        new ManageUser(currentUserRole, currentUserName).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnuserActionPerformed
 
@@ -196,7 +196,7 @@ public class Home extends javax.swing.JFrame {
         if (manageOrder == null) {
             manageOrder = new ManageOrder(currentUserRole, currentUserName);  // Initialize ManageOrder if not already done
         }
-        new ManageProduct(currentUserRole).setVisible(true);
+        new ManageProduct(currentUserRole, currentUserName).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnproductActionPerformed
 
@@ -212,7 +212,7 @@ public class Home extends javax.swing.JFrame {
 
     private void btnvieworderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnvieworderActionPerformed
         // TODO add your handling code here:
-        new ViewOrder(currentUserRole).setVisible(true);
+        new ViewOrder(currentUserRole,currentUserName).setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnvieworderActionPerformed
 
