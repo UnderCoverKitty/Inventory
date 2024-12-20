@@ -646,167 +646,78 @@ public class ManageOrder extends javax.swing.JFrame {
     }//GEN-LAST:event_closeActionPerformed
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
-        /*// TODO add your handling code here:
         if (finalTotalPrice != 0 && !name.getText().equals("")) {
-        orderId = getUniqueId("Bill-");
+            orderId = getUniqueId("Bill-");
         }
-        
+
         DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
         if (tableCart.getRowCount() != 0) {
-        try {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
-        
-        // Update product quantities
-        for (int i = 0; i < tableCart.getRowCount(); i++) {
-        ps = con.prepareStatement("UPDATE product SET quantity = quantity - ? WHERE id = ?");
-        ps.setInt(1, Integer.parseInt(dtm.getValueAt(i, 2).toString()));
-        ps.setInt(2, Integer.parseInt(dtm.getValueAt(i, 0).toString()));
-        ps.executeUpdate();
-        }
-        
-        // Insert into orderdetail
-        SimpleDateFormat myFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Calendar cal = Calendar.getInstance();
-        ps = con.prepareStatement("INSERT INTO orderdetail (customer_pk, orderdate, totalpaid) VALUES (?, ?, ?)");
-        ps.setInt(1, customerPk);  // Set customer ID
-        ps.setString(2, myFormat.format(cal.getTime()));  // Format date as YYYY-MM-DD
-        ps.setInt(3, finalTotalPrice);  // Set total price
-        ps.executeUpdate();
-        } catch (SQLException e) {
-        JOptionPane.showMessageDialog(null, "SQL Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-        } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Unexpected Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-        } finally {
-        try {
-        if (ps != null) {
-        ps.close();
-        }
-        if (con != null) {
-        con.close();
-        }
-        } catch (SQLException ex) {
-        ex.printStackTrace();
-        }
-        }
-        
-        // Generate PDF
-        com.itextpdf.text.Document doc = new com.itextpdf.text.Document();
-        try {
-        PdfWriter.getInstance(doc, new FileOutputStream("Bill_" + orderId + ".pdf"));
-        doc.open();
-        doc.add(new Paragraph("                                                       Inventory Management System"));
-        doc.add(new Paragraph("****************************************************************************************************************"));
-        doc.add(new Paragraph("Order ID: " + orderId));
-        doc.add(new Paragraph("Total Paid: " + finalTotalPrice));
-        doc.add(new Paragraph("****************************************************************************************************************"));
-        
-        PdfPTable table = new PdfPTable(5);
-        table.addCell("Name");
-        table.addCell("Description");
-        table.addCell("Price Per Unit");
-        table.addCell("Quantity");
-        table.addCell("Sub Total");
-        
-        for (int j = 0; j < tableCart.getRowCount(); j++) {
-        table.addCell(tableCart.getValueAt(j, 1).toString());
-        table.addCell(tableCart.getValueAt(j, 4).toString());
-        table.addCell(tableCart.getValueAt(j, 3).toString());
-        table.addCell(tableCart.getValueAt(j, 2).toString());
-        table.addCell(tableCart.getValueAt(j, 5).toString());
-        }
-        
-        doc.add(table);
-        doc.add(new Paragraph("****************************************************************************************************************"));
-        doc.add(new Paragraph("Thank you, please visit again!"));
-        } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error generating PDF: " + e.getMessage());
-        } finally {
-        doc.close();
-        }
-        
-        // Open the PDF
-        try {
-        if (Desktop.isDesktopSupported()) {
-        Desktop.getDesktop().open(new File("Bill_" + orderId + ".pdf"));
-        }
-        } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Unable to open PDF: " + e.getMessage());
-        }
-        
-        setVisible(false);
-        new ManageOrder(currentUserRole).setVisible(true);
-        }*/
-        if (finalTotalPrice != 0 && !name.getText().equals("")) {
-        orderId = getUniqueId("Bill-");
-    }
+            Connection con = null;
+            PreparedStatement ps = null;
+            try {
+                // Save order details to database
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
 
-    DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
-    if (tableCart.getRowCount() != 0) {
-        Connection con = null;
-        PreparedStatement ps = null;
-        try {
-            // Save order details to database
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
+                for (int i = 0; i < tableCart.getRowCount(); i++) {
+                    ps = con.prepareStatement("UPDATE product SET quantity = quantity - ? WHERE id = ?");
+                    ps.setInt(1, Integer.parseInt(dtm.getValueAt(i, 2).toString()));
+                    ps.setInt(2, Integer.parseInt(dtm.getValueAt(i, 0).toString()));
+                    ps.executeUpdate();
+                }
 
-            for (int i = 0; i < tableCart.getRowCount(); i++) {
-                ps = con.prepareStatement("UPDATE product SET quantity = quantity - ? WHERE id = ?");
-                ps.setInt(1, Integer.parseInt(dtm.getValueAt(i, 2).toString()));
-                ps.setInt(2, Integer.parseInt(dtm.getValueAt(i, 0).toString()));
+                SimpleDateFormat myFormat = new SimpleDateFormat("yyyy-MM-dd");
+                Calendar cal = Calendar.getInstance();
+                ps = con.prepareStatement("INSERT INTO orderdetail (customer_pk, orderdate, totalpaid) VALUES (?, ?, ?)");
+                ps.setInt(1, customerPk);
+                ps.setString(2, myFormat.format(cal.getTime()));
+                ps.setInt(3, finalTotalPrice);
                 ps.executeUpdate();
-            }
 
-            SimpleDateFormat myFormat = new SimpleDateFormat("yyyy-MM-dd");
-            Calendar cal = Calendar.getInstance();
-            ps = con.prepareStatement("INSERT INTO orderdetail (customer_pk, orderdate, totalpaid) VALUES (?, ?, ?)");
-            ps.setInt(1, customerPk);
-            ps.setString(2, myFormat.format(cal.getTime()));
-            ps.setInt(3, finalTotalPrice);
-            ps.executeUpdate();
+                // Prepare receipt data
+                List<String[]> items = new ArrayList<>();
+                for (int i = 0; i < tableCart.getRowCount(); i++) {
+                    String[] item = {
+                        tableCart.getValueAt(i, 1).toString(), // Product name
+                        tableCart.getValueAt(i, 3).toString(), // Price
+                        tableCart.getValueAt(i, 2).toString(), // Quantity
+                        tableCart.getValueAt(i, 5).toString() // Subtotal
+                    };
+                    items.add(item);
+                }
 
-            // Prepare receipt data
-            List<String[]> items = new ArrayList<>();
-            for (int i = 0; i < tableCart.getRowCount(); i++) {
-                String[] item = {
-                    tableCart.getValueAt(i, 1).toString(), // Product name
-                    tableCart.getValueAt(i, 3).toString(), // Price
-                    tableCart.getValueAt(i, 2).toString(), // Quantity
-                    tableCart.getValueAt(i, 5).toString()  // Subtotal
-                };
-                items.add(item);
-            }
+                // Print receipPrintRet
+                PrintReceipt receipt = new PrintReceipt(orderId, name.getText(), currentUserName, items, finalTotalPrice);
+                PrinterJob printerJob = PrinterJob.getPrinterJob();
+                printerJob.setPrintable(receipt);
 
-            // Print receipt
-            PrintReceipt receipt = new PrintReceipt(orderId, name.getText(), currentUserName, items, finalTotalPrice);
-            PrinterJob printerJob = PrinterJob.getPrinterJob();
-            printerJob.setPrintable(receipt);
+                if (printerJob.printDialog()) {
+                    try {
+                        printerJob.print();
+                    } catch (PrinterException e) {
+                        JOptionPane.showMessageDialog(null, "Error printing receipt: " + e.getMessage());
+                    }
+                }
 
-            if (printerJob.printDialog()) {
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Unexpected Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            } finally {
                 try {
-                    printerJob.print();
-                } catch (PrinterException e) {
-                    JOptionPane.showMessageDialog(null, "Error printing receipt: " + e.getMessage());
+                    if (ps != null) {
+                        ps.close();
+                    }
+                    if (con != null) {
+                        con.close();
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
                 }
             }
 
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Unexpected Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        } finally {
-            try {
-                if (ps != null) ps.close();
-                if (con != null) con.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            setVisible(false);
+            new ManageOrder(currentUserRole, currentUserName).setVisible(true);
         }
-
-        setVisible(false);
-        new ManageOrder(currentUserRole, currentUserName).setVisible(true);
-    }
 
     }//GEN-LAST:event_saveActionPerformed
 
@@ -982,101 +893,7 @@ public class ManageOrder extends javax.swing.JFrame {
     }//GEN-LAST:event_oquanKeyTyped
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        /*// TODO add your handling code here:
-        if (finalTotalPrice != 0 && !name.getText().equals("")) {
-        orderId = getUniqueId("Bill-");
-        }
-        
-        DefaultTableModel dtm = (DefaultTableModel) tableCart.getModel();
-        if (tableCart.getRowCount() != 0) {
-        try {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        con = DriverManager.getConnection("jdbc:mysql://localhost:3306/inventorymanagement", "root", "");
-        
-        // Update product quantities
-        for (int i = 0; i < tableCart.getRowCount(); i++) {
-        ps = con.prepareStatement("UPDATE product SET quantity = quantity - ? WHERE id = ?");
-        ps.setInt(1, Integer.parseInt(dtm.getValueAt(i, 2).toString()));
-        ps.setInt(2, Integer.parseInt(dtm.getValueAt(i, 0).toString()));
-        ps.executeUpdate();
-        }
-        
-        // Insert into orderdetail
-        SimpleDateFormat myFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Calendar cal = Calendar.getInstance();
-        ps = con.prepareStatement("INSERT INTO orderdetail (customer_pk, orderdate, totalpaid) VALUES (?, ?, ?)");
-        ps.setInt(1, customerPk);  // Set customer ID
-        ps.setString(2, myFormat.format(cal.getTime()));  // Format date as YYYY-MM-DD
-        ps.setInt(3, finalTotalPrice);  // Set total price
-        ps.executeUpdate();
-        } catch (SQLException e) {
-        JOptionPane.showMessageDialog(null, "SQL Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-        } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Unexpected Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-        } finally {
-        try {
-        if (ps != null) {
-        ps.close();
-        }
-        if (con != null) {
-        con.close();
-        }
-        } catch (SQLException ex) {
-        ex.printStackTrace();
-        }
-        }
-        
-        // Generate PDF
-        com.itextpdf.text.Document doc = new com.itextpdf.text.Document();
-        try {
-        PdfWriter.getInstance(doc, new FileOutputStream("Bill_" + orderId + ".pdf"));
-        doc.open();
-        doc.add(new Paragraph("                                                       Inventory Management System\n"));
-        doc.add(new Paragraph("****************************************************************************************************************"));
-        doc.add(new Paragraph("Order ID: " + orderId));
-        doc.add(new Paragraph("Total Paid: " + finalTotalPrice));
-        doc.add(new Paragraph("****************************************************************************************************************"));
-        
-        PdfPTable table = new PdfPTable(5);
-        table.addCell("Name");
-        table.addCell("Description");
-        table.addCell("Price Per Unit");
-        table.addCell("Quantity");
-        table.addCell("Sub Total");
-        
-        for (int j = 0; j < tableCart.getRowCount(); j++) {
-        table.addCell(tableCart.getValueAt(j, 1).toString());
-        table.addCell(tableCart.getValueAt(j, 4).toString());
-        table.addCell(tableCart.getValueAt(j, 3).toString());
-        table.addCell(tableCart.getValueAt(j, 2).toString());
-        table.addCell(tableCart.getValueAt(j, 5).toString());
-        }
-        
-        doc.add(table);
-        doc.add(new Paragraph("****************************************************************************************************************"));
-        doc.add(new Paragraph("Thank you, please visit again!"));
-        } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error generating PDF: " + e.getMessage());
-        } finally {
-        doc.close();
-        }
-        
-        // Open the PDF
-        try {
-        if (Desktop.isDesktopSupported()) {
-        Desktop.getDesktop().open(new File("Bill_" + orderId + ".pdf"));
-        }
-        } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Unable to open PDF: " + e.getMessage());
-        }
-        
-        setVisible(false);
-        new ManageOrder(currentUserRole).setVisible(true);
-        }*/
-        // TODO add your handling code here:
-        // Edit mode
+       
         if (!isEditMode) {
             // Add mode
             if (!validateFields(false)) {
